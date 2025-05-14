@@ -44,7 +44,6 @@ def reset_quiz():
     st.session_state.total_score = 0
     st.session_state.show_result = False
 
-# 결과 표시
 def show_result(score):
     st.subheader("📝 결과 진단")
     if score <= 7:
@@ -77,11 +76,12 @@ if not st.session_state.show_result:
         q = questions[current]
         st.subheader(f"Q{current + 1}. {q['question']}")
         for label, score in q["options"]:
-            if st.button(label, key=f"{current}-{label}"):
+            if st.button(label, key=f"btn_{current}_{label}"):
                 st.session_state.total_score += score
                 st.session_state.current_q += 1
                 if st.session_state.current_q == len(questions):
                     st.session_state.show_result = True
-                st.experimental_rerun()
+                # rerun 없이 자동 반영됨
+                st.stop()
 else:
     show_result(st.session_state.total_score)

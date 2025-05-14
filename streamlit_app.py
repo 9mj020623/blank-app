@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="눈 건강 자가 진단 테스트", page_icon="👁️", layout="centered")
 st.title("👁️ 눈 건강 자가 진단 테스트")
 
-# 질문 데이터
+# 질문 목록
 questions = [
     {
         "question": "하루에 디지털 기기를 얼마나 사용하나요?",
@@ -32,18 +32,20 @@ questions = [
 ]
 
 # 세션 상태 초기화
-if "current_q" not in st.session_state:
-    st.session_state.current_q = 0
+if "question_index" not in st.session_state:
+    st.session_state.question_index = 0
 if "total_score" not in st.session_state:
     st.session_state.total_score = 0
-if "show_result" not in st.session_state:
-    st.session_state.show_result = False
+if "answer_submitted" not in st.session_state:
+    st.session_state.answer_submitted = False
 
-def reset_quiz():
-    st.session_state.current_q = 0
+# 테스트 다시 시작 함수
+def restart():
+    st.session_state.question_index = 0
     st.session_state.total_score = 0
-    st.session_state.show_result = False
+    st.session_state.answer_submitted = False
 
+# 결과 출력 함수
 def show_result(score):
     st.subheader("📝 결과 진단")
     if score <= 7:
@@ -67,21 +69,24 @@ def show_result(score):
         st.write("**추천 식단**: 당근 스틱, 고구마 구이")
         st.write("**스트레칭 방법**: 20-20-20 규칙, 눈 깜빡임 운동")
 
-    st.button("🔁 다시 테스트하기", on_click=reset_quiz)
+    st.button("🔁 다시 테스트하기", on_click=restart)
 
-# 질문 표시
-if not st.session_state.show_result:
-    current = st.session_state.current_q
-    if current < len(questions):
-        q = questions[current]
-        st.subheader(f"Q{current + 1}. {q['question']}")
-        for label, score in q["options"]:
-            if st.button(label, key=f"btn_{current}_{label}"):
+# 테스트 진행
+if st.session_state.question_index < len(questions):
+    q = questions[st.session_state.question_index]
+    st.subheader(f"Q{st.session_state.question_index + 1}. {q['question']}")
+
+    # 한 번만 선택 가능하도록 버튼 감싸기
+    if not st.session_state.answer_submitted:
+        for text, score in q["options"]:
+            if st.button(text):
                 st.session_state.total_score += score
-                st.session_state.current_q += 1
-                if st.session_state.current_q == len(questions):
-                    st.session_state.show_result = True
-                # rerun 없이 자동 반영됨
-                st.stop()
+                st.session_state.answer_submitted = True
+
+    # 다음 버튼
+    if st.session_state.answer_submitted:
+        if st.button("다음"):
+            st.session_state.question_index += 1
+            st.session_state.answer_submitted = False
 else:
     show_result(st.session_state.total_score)

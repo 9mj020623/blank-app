@@ -69,19 +69,22 @@ def show_result(score):
 
     st.button("🔁 다시 테스트하기", on_click=reset_quiz)
 
-# 질문 표시
+# 질문 페이지
 if not st.session_state.show_result:
-    current = st.session_state.current_q
-    if current < len(questions):
-        q = questions[current]
-        st.subheader(f"Q{current + 1}. {q['question']}")
-        for label, score in q["options"]:
-            if st.button(label, key=f"btn_{current}_{label}"):
+    q_index = st.session_state.current_q
+    if q_index < len(questions):
+        question_data = questions[q_index]
+        st.subheader(f"Q{q_index + 1}. {question_data['question']}")
+        for i, (label, score) in enumerate(question_data["options"]):
+            if st.button(label, key=f"option_{q_index}_{i}"):
                 st.session_state.total_score += score
                 st.session_state.current_q += 1
-                if st.session_state.current_q == len(questions):
+                if st.session_state.current_q >= len(questions):
                     st.session_state.show_result = True
-                # rerun 없이 자동 반영됨
-                st.stop()
-else:
+                    st.experimental_rerun()  # 안전한 위치: 버튼 클릭 직후만
+    else:
+        st.session_state.show_result = True
+
+# 결과 페이지
+if st.session_state.show_result:
     show_result(st.session_state.total_score)

@@ -36,19 +36,13 @@ if "current_q" not in st.session_state:
     st.session_state.current_q = 0
 if "total_score" not in st.session_state:
     st.session_state.total_score = 0
-if "answered" not in st.session_state:
-    st.session_state.answered = False
-
-def next_question(score):
-    if not st.session_state.answered:
-        st.session_state.total_score += score
-        st.session_state.current_q += 1
-        st.session_state.answered = True
+if "show_result" not in st.session_state:
+    st.session_state.show_result = False
 
 def reset_quiz():
     st.session_state.current_q = 0
     st.session_state.total_score = 0
-    st.session_state.answered = False
+    st.session_state.show_result = False
 
 def show_result(score):
     st.subheader("📝 결과 진단")
@@ -75,17 +69,22 @@ def show_result(score):
 
     st.button("🔁 다시 테스트하기", on_click=reset_quiz)
 
-# 질문 진행
-if st.session_state.current_q < len(questions):
-    q = questions[st.session_state.current_q]
-    st.subheader(f"Q{st.session_state.current_q + 1}. {q['question']}")
-    
-    for i, (label, score) in enumerate(q["options"]):
-        if st.button(label, key=f"option_{i}_{st.session_state.current_q}"):
-            next_question(score)
-            st.experimental_rerun()  # rerun은 이 위치에선 문제 없음
+# 질문 페이지
+if not st.session_state.show_result:
+    q_index = st.session_state.current_q
+    if q_index < len(questions):
+        question_data = questions[q_index]
+        st.subheader(f"Q{q_index + 1}. {question_data['question']}")
+        for i, (label, score) in enumerate(question_data["options"]):
+            if st.button(label, key=f"option_{q_index}_{i}"):
+                st.session_state.total_score += score
+                st.session_state.current_q += 1
+                if st.session_state.current_q >= len(questions):
+                    st.session_state.show_result = True
+                st.experimental_rerun()  # 안전한 위치: 버튼 클릭 직후만
+    else:
+        st.session_state.show_result = True
 
-    # reset answered 상태를 다음 프레임에서 초기화
-    st.session_state.answered = False
-else:
+# 결과 페이지
+if st.session_state.show_result:
     show_result(st.session_state.total_score)

@@ -38,11 +38,14 @@ if "total_score" not in st.session_state:
     st.session_state.total_score = 0
 if "show_result" not in st.session_state:
     st.session_state.show_result = False
+if "last_clicked" not in st.session_state:
+    st.session_state.last_clicked = None
 
 def reset_quiz():
     st.session_state.current_q = 0
     st.session_state.total_score = 0
     st.session_state.show_result = False
+    st.session_state.last_clicked = None
 
 def show_result(score):
     st.subheader("📝 결과 진단")
@@ -69,19 +72,19 @@ def show_result(score):
 
     st.button("🔁 다시 테스트하기", on_click=reset_quiz)
 
-# 질문 표시
+# 진행 중일 경우
 if not st.session_state.show_result:
     current = st.session_state.current_q
+
     if current < len(questions):
         q = questions[current]
         st.subheader(f"Q{current + 1}. {q['question']}")
-        for label, score in q["options"]:
-            if st.button(label, key=f"btn_{current}_{label}"):
+        for i, (label, score) in enumerate(q["options"]):
+            if st.button(label, key=f"btn_{current}_{i}"):
                 st.session_state.total_score += score
                 st.session_state.current_q += 1
-                if st.session_state.current_q == len(questions):
+                if st.session_state.current_q >= len(questions):
                     st.session_state.show_result = True
-                # rerun 없이 자동 반영됨
-                st.stop()
+                st.experimental_rerun()
 else:
     show_result(st.session_state.total_score)

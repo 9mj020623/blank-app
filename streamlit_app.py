@@ -1,51 +1,52 @@
 import streamlit as st
 
 st.set_page_config(page_title="눈 건강 자가 진단 테스트", page_icon="👁️", layout="centered")
-
 st.title("👁️ 눈 건강 자가 진단 테스트")
 
+# 질문 데이터
 questions = [
     {
-        "question": "1. 하루에 디지털 기기를 얼마나 사용하나요?",
-        "options": ["4시간 이하", "4시간 이상"],
-        "scores": [1, 2]
+        "question": "하루에 디지털 기기를 얼마나 사용하나요?",
+        "options": [("4시간 이하", 1), ("4시간 이상", 2)]
     },
     {
-        "question": "2. 디지털 기기를 사용한 후 눈의 피로를 얼마나 느끼나요?",
-        "options": ["거의 느끼지 않음", "자주 느끼고 있음"],
-        "scores": [1, 2]
+        "question": "디지털 기기를 사용한 후 눈의 피로를 얼마나 느끼나요?",
+        "options": [("거의 느끼지 않음", 1), ("자주 느끼고 있음", 2)]
     },
     {
-        "question": "3. 눈 건강을 위해 어떤 노력을 하고 있나요?",
-        "options": ["특별히 신경 쓰지 않음", "영양소와 운동을 챙김"],
-        "scores": [1, 2]
+        "question": "눈 건강을 위해 어떤 노력을 하고 있나요?",
+        "options": [("특별히 신경 쓰지 않음", 1), ("영양소와 운동을 챙김", 2)]
     },
     {
-        "question": "4. 밝은 빛에 노출될 때 어떤 반응을 보이나요?",
-        "options": ["괜찮음", "눈부심을 느낌"],
-        "scores": [1, 2]
+        "question": "밝은 빛에 노출될 때 어떤 반응을 보이나요?",
+        "options": [("괜찮음", 1), ("눈부심을 느낌", 2)]
     },
     {
-        "question": "5. 눈 건강에 좋은 음식을 얼마나 자주 섭취하나요?",
-        "options": ["가끔 먹음", "자주 챙겨 먹음"],
-        "scores": [1, 2]
+        "question": "눈 건강에 좋은 음식을 얼마나 자주 섭취하나요?",
+        "options": [("가끔 먹음", 1), ("자주 챙겨 먹음", 2)]
     },
     {
-        "question": "6. 눈의 피로를 줄이기 위해 스트레칭이나 운동을 얼마나 자주 하나요?",
-        "options": ["전혀 하지 않음", "자주 함"],
-        "scores": [1, 2]
+        "question": "눈의 피로를 줄이기 위해 스트레칭이나 운동을 얼마나 자주 하나요?",
+        "options": [("전혀 하지 않음", 1), ("자주 함", 2)]
     }
 ]
 
 # 세션 상태 초기화
-if "answers" not in st.session_state:
-    st.session_state.answers = [None] * len(questions)
-if "submitted" not in st.session_state:
-    st.session_state.submitted = False
+if "current_q" not in st.session_state:
+    st.session_state.current_q = 0
+if "total_score" not in st.session_state:
+    st.session_state.total_score = 0
+if "show_result" not in st.session_state:
+    st.session_state.show_result = False
 
-def show_results(score):
-    st.subheader("🔍 결과 진단")
+def reset_quiz():
+    st.session_state.current_q = 0
+    st.session_state.total_score = 0
+    st.session_state.show_result = False
 
+# 결과 표시
+def show_result(score):
+    st.subheader("📝 결과 진단")
     if score <= 7:
         st.markdown("### ✅ 초집중 안구형")
         st.write("**맞춤 영양소**: 루테인")
@@ -67,25 +68,20 @@ def show_results(score):
         st.write("**추천 식단**: 당근 스틱, 고구마 구이")
         st.write("**스트레칭 방법**: 20-20-20 규칙, 눈 깜빡임 운동")
 
-with st.form("eye_test"):
-    total_score = 0
-    for idx, q in enumerate(questions):
-        choice = st.radio(q["question"], q["options"], key=f"q{idx}")
-        if choice in q["options"]:
-            selected_index = q["options"].index(choice)
-            st.session_state.answers[idx] = q["scores"][selected_index]
-    
-    submitted = st.form_submit_button("결과 보기")
-    if submitted:
-        st.session_state.submitted = True
+    st.button("🔁 다시 테스트하기", on_click=reset_quiz)
 
-if st.session_state.submitted:
-    if None in st.session_state.answers:
-        st.warning("모든 질문에 답변해 주세요.")
-    else:
-        score = sum(st.session_state.answers)
-        show_results(score)
-        if st.button("🔄 다시 테스트하기"):
-            st.session_state.answers = [None] * len(questions)
-            st.session_state.submitted = False
-            st.experimental_rerun()
+# 질문 표시
+if not st.session_state.show_result:
+    current = st.session_state.current_q
+    if current < len(questions):
+        q = questions[current]
+        st.subheader(f"Q{current + 1}. {q['question']}")
+        for label, score in q["options"]:
+            if st.button(label, key=f"{current}-{label}"):
+                st.session_state.total_score += score
+                st.session_state.current_q += 1
+                if st.session_state.current_q == len(questions):
+                    st.session_state.show_result = True
+                st.experimental_rerun()
+else:
+    show_result(st.session_state.total_score)

@@ -81,7 +81,7 @@ if not st.session_state.show_result:
                 st.session_state.current_q += 1
                 if st.session_state.current_q >= len(questions):
                     st.session_state.show_result = True
-                    st.experimental_rerun()  # 안전한 위치: 버튼 클릭 직후만
+                    #st.experimental_rerun()  # 안전한 위치: 버튼 클릭 직후만
     else:
         st.session_state.show_result = True
 

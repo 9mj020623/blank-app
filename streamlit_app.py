@@ -36,16 +36,19 @@ if "current_q" not in st.session_state:
     st.session_state.current_q = 0
 if "total_score" not in st.session_state:
     st.session_state.total_score = 0
-if "show_result" not in st.session_state:
-    st.session_state.show_result = False
-if "last_clicked" not in st.session_state:
-    st.session_state.last_clicked = None
+if "answered" not in st.session_state:
+    st.session_state.answered = False
+
+def next_question(score):
+    if not st.session_state.answered:
+        st.session_state.total_score += score
+        st.session_state.current_q += 1
+        st.session_state.answered = True
 
 def reset_quiz():
     st.session_state.current_q = 0
     st.session_state.total_score = 0
-    st.session_state.show_result = False
-    st.session_state.last_clicked = None
+    st.session_state.answered = False
 
 def show_result(score):
     st.subheader("📝 결과 진단")
@@ -72,19 +75,17 @@ def show_result(score):
 
     st.button("🔁 다시 테스트하기", on_click=reset_quiz)
 
-# 진행 중일 경우
-if not st.session_state.show_result:
-    current = st.session_state.current_q
+# 질문 진행
+if st.session_state.current_q < len(questions):
+    q = questions[st.session_state.current_q]
+    st.subheader(f"Q{st.session_state.current_q + 1}. {q['question']}")
+    
+    for i, (label, score) in enumerate(q["options"]):
+        if st.button(label, key=f"option_{i}_{st.session_state.current_q}"):
+            next_question(score)
+            st.experimental_rerun()  # rerun은 이 위치에선 문제 없음
 
-    if current < len(questions):
-        q = questions[current]
-        st.subheader(f"Q{current + 1}. {q['question']}")
-        for i, (label, score) in enumerate(q["options"]):
-            if st.button(label, key=f"btn_{current}_{i}"):
-                st.session_state.total_score += score
-                st.session_state.current_q += 1
-                if st.session_state.current_q >= len(questions):
-                    st.session_state.show_result = True
-                st.experimental_rerun()
+    # reset answered 상태를 다음 프레임에서 초기화
+    st.session_state.answered = False
 else:
     show_result(st.session_state.total_score)
